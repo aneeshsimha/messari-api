@@ -43,8 +43,10 @@ def messari_test():
     json_to_df(data)
 
 def get_list_of_assets():
-    print("Enter list of assets: ")
-    asset_list = input()
+    print("Enter list of assets seperating by a comma: ")
+    asset_list = input().split(",").strip(" ")
+    print("Please enter Start Date in this format ''")
+
     print(asset_list)
 
 if __name__ == "__main__":
