@@ -1,3 +1,4 @@
+#take_home_bonus
 import os
 import pandas as pd
 from pandas import json_normalize
@@ -38,16 +39,39 @@ def ts_api_request(asset,start_date,end_date, failed_assets):
         raise SystemExit(e)
 
 
-def ts_json_to_df(json_obj):
+def metrics_api_request(asset, metric, start_date,end_date):
+    messari_url = "https://data.messari.io/api/v1/assets/"+ asset +"/metrics/" + metric+ "/time-series?start="+ start_date +"&end="+ end_date + "&interval=1d"
+    try:
+        response = requests.get(messari_url)
+        if response.status_code == 200:
+            data = response.json()
+            output_df = metrics_json_to_df(data)
+            return(output_df)
+        elif response.status_code == 404:
+            #failed_assets.append(asset)
+            return None
+            
+    except requests.exceptions.RequestException as e:  # This is the correct syntax
+        raise SystemExit(e)
+
+def metrics_json_to_df(json_obj):
     dumps = json.dumps(json_obj, sort_keys=True, indent=4)
     info = json.loads(dumps)
     data_df =json_normalize(info['data'], record_path = ['values'])
-    data_df.columns = ["timestamp","open","high", "low", "close", "volume"]
-    data_df['timestamp']=data_df.apply(lambda x: time.strftime('%Y-%m-%d', time.gmtime(x['timestamp']/1000)),axis=1)
-    asset_symbol= info['data']['symbol']
+    #print(type(data_df))
+    schema = list(info['data']['schema']['values_schema'].keys())
+    schema.remove('timestamp')
+    schema.insert(0, 'timestamp')
+    print(schema)
+    #print(data_df.head())
+    data_df.columns = schema
 
-    ts_output_df = data_df[['timestamp','close']]
-    ts_output_df.columns = ['timestamp',asset_symbol]
+    data_df['timestamp']=data_df.apply(lambda x: time.strftime('%Y-%m-%d', time.gmtime(x['timestamp']/1000)),axis=1)
+    asset_key= info['data']['parameters']['asset_key']
+    print(asset_key)
+    ts_output_df = data_df
+    #ts_output_df = data_df[['timestamp','close']]
+    #ts_output_df.columns = ['timestamp',asset_symbol]
     ts_output_df = ts_output_df.set_index('timestamp')
 
     return ts_output_df
@@ -89,7 +113,7 @@ if __name__ == "__main__":
     failed_assets = []
     df_list = []
     asset_list = []
-
+    '''
     asset_list = get_list_of_assets()
     start_date = get_start_date()
     end_date = get_end_date()
@@ -98,9 +122,13 @@ if __name__ == "__main__":
         asset_df = ts_api_request(asset, start_date, end_date, failed_assets)
         if asset_df is not None:
             df_list.append(asset_df)
-
+    
     final_df = merge_dfs(df_list)
     print(final_df.head())
+    '''
 
+    #output = metrics_api_request("yfi", "price", "2021-01-01","2021-01-31")
+    output2 = metrics_api_request("uni", "daily.shp", "2021-01-01","2021-01-31")
+    print(output2.head())
     if failed_assets:
         print("Here is a list of assets that did not load: ", failed_assets)
