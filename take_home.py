@@ -44,7 +44,8 @@ def messari_test():
 
 def get_list_of_assets():
     print("Enter list of assets seperating by a comma: ")
-    asset_list = input().split(",").strip(" ")
+    asset_list = input().split(",")#.strip(" ")
+    [asset.strip(" ") for asset in asset_list]
     print("Please enter Start Date in this format ''")
 
     print(asset_list)
