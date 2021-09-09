@@ -9,6 +9,7 @@ import datetime
 from functools import reduce
 
 def validate(date_text):
+    #Validates date inputted
     try:
         datetime.datetime.strptime(date_text, '%Y-%m-%d')
         return True
@@ -16,10 +17,6 @@ def validate(date_text):
         #raise ValueError("Incorrect data format, should be YYYY-MM-DD")
         return False
 
-def jprint(obj):
-    # create a formatted string of the Python JSON object
-    text = json.dumps(obj, sort_keys=True, indent=4)
-    print(text)
 
 def ts_api_request(asset,start_date,end_date, failed_assets):
     
@@ -45,7 +42,7 @@ def ts_json_to_df(json_obj):
     data_df.columns = ["timestamp","open","high", "low", "close", "volume"]
     data_df['timestamp']=data_df.apply(lambda x: time.strftime('%Y-%m-%d', time.gmtime(x['timestamp']/1000)),axis=1)
     asset_symbol= info['data']['symbol']
-
+    #timestamp formatting
     ts_output_df = data_df[['timestamp','close']]
     ts_output_df.columns = ['timestamp',asset_symbol]
     ts_output_df = ts_output_df.set_index('timestamp')
@@ -53,6 +50,7 @@ def ts_json_to_df(json_obj):
     return ts_output_df
 
 def merge_dfs(df_list):
+    #merge all df based on timestamp index into final output df
     merge_df = reduce(lambda df1,df2: pd.merge(df1,df2, left_index = True, right_index = True), df_list)
     return merge_df
 
@@ -65,13 +63,13 @@ def get_list_of_assets():
 
 def get_start_date():
     valid_start_date = False
-    #[print(asset) for asset in asset_list]
+    ]
 
     while(not valid_start_date):
         print("Please enter Start Date in this format 'YYYY-MM-DD'")
         start_date_input = input()
         valid_start_date = validate(start_date_input)
-    #print("start date: ", start_date_input)
+        
     return start_date_input
 
 def get_end_date():
@@ -80,12 +78,10 @@ def get_end_date():
         print("Please enter End Date in this format 'YYYY-MM-DD'")
         end_date_input = input()
         valid_end_date = validate(end_date_input)
-    #print('end date: ', end_date_input)
+        
     return end_date_input
     
-
-if __name__ == "__main__":
-
+def run_main():
     failed_assets = []
     df_list = []
     asset_list = []
@@ -98,9 +94,15 @@ if __name__ == "__main__":
         asset_df = ts_api_request(asset, start_date, end_date, failed_assets)
         if asset_df is not None:
             df_list.append(asset_df)
-
+    print("All asset prices shown in USD and are closing prices")
     final_df = merge_dfs(df_list)
-    print(final_df.head())
-
+    
     if failed_assets:
         print("Here is a list of assets that did not load: ", failed_assets)
+    return final_df
+
+if __name__ == "__main__":
+
+    final_output_df = run_main()
+    
+    print(final_output_df)
