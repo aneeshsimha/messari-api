@@ -29,7 +29,7 @@ def ts_api_request(asset,start_date,end_date, failed_assets):
         response = requests.get(messari_url)
         if response.status_code == 200:
             data = response.json()
-            output_df = ts_json_to_df(data)
+            output_df = metrics_json_to_df(data)
             return(output_df)
         elif response.status_code == 404:
             failed_assets.append(asset)
@@ -39,7 +39,7 @@ def ts_api_request(asset,start_date,end_date, failed_assets):
         raise SystemExit(e)
 
 
-def metrics_api_request(asset, metric, start_date,end_date):
+def metrics_api_request(asset, metric, start_date,end_date, failed_assets):
     messari_url = "https://data.messari.io/api/v1/assets/"+ asset +"/metrics/" + metric+ "/time-series?start="+ start_date +"&end="+ end_date + "&interval=1d"
     try:
         response = requests.get(messari_url)
@@ -48,7 +48,7 @@ def metrics_api_request(asset, metric, start_date,end_date):
             output_df = metrics_json_to_df(data)
             return(output_df)
         elif response.status_code == 404:
-            #failed_assets.append(asset)
+            failed_assets.append(asset)
             return None
             
     except requests.exceptions.RequestException as e:  # This is the correct syntax
@@ -87,6 +87,13 @@ def get_list_of_assets():
     #print(asset_list)
     return asset_list
 
+def get_req_metric():
+    print("Enter Desired Metric to be queried")
+    metric = input()
+    metric.lower()
+    return metric
+
+
 def get_start_date():
     valid_start_date = False
     #[print(asset) for asset in asset_list]
@@ -114,12 +121,14 @@ if __name__ == "__main__":
     df_list = []
     asset_list = []
     '''
+    metric = get_req_metric()
     asset_list = get_list_of_assets()
     start_date = get_start_date()
     end_date = get_end_date()
 
     for asset in asset_list:
-        asset_df = ts_api_request(asset, start_date, end_date, failed_assets)
+        #asset_df = ts_api_request(asset, start_date, end_date, failed_assets)
+        asset_df = metrics_api_request(asset, metric, start_date,end_date, failed_assets)
         if asset_df is not None:
             df_list.append(asset_df)
     
